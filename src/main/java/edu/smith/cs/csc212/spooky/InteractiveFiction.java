@@ -3,9 +3,8 @@ package edu.smith.cs.csc212.spooky;
 import java.util.List;
 
 /**
- * This is our main class for SpookyMansion.
- * It interacts with a GameWorld and handles user-input.
- * It can play any game, really.
+ * This is our main class for SpookyMansion. It interacts with a GameWorld and
+ * handles user-input. It can play any game, really.
  *
  * @author jfoley
  *
@@ -14,35 +13,53 @@ public class InteractiveFiction {
 
 	/**
 	 * This method actually plays the game.
+	 * 
 	 * @param input - a helper object to ask the user questions.
-	 * @param game - the places and exits that make up the game we're playing.
+	 * @param game  - the places and exits that make up the game we're playing.
 	 * @return where - the place the player finished.
 	 */
+	
 	static String runGame(TextInput input, GameWorld game) {
 		// This is the current location of the player (initialize as start).
 		Player player = new Player(game.getStart());
+		// To keep track of game current time and total hours.
+		GameTime gameTime = new GameTime();
+		
+
+		// Instructs player how to get help
+		System.out.println("Type 'help' at any time for instructions.");
 
 		// Play the game until quitting.
-		// This is too hard to express here, so we just use an infinite loop with breaks.
+		// This is too hard to express here, so we just use an infinite loop with
+		// breaks.
 		while (true) {
 			// Print the description of where you are.
 			Place here = game.getPlace(player.getPlace());
-			
+
 			System.out.println();
 			System.out.println("... --- ...");
-			System.out.println(here.getDescription());
+			System.out.println(here.printDescription());
+			// Prints game time.
+			System.out.println("The time is "+gameTime.getHour()+":00.");
+
+			if (player.hasBeenHereBefore()) {
+				System.out.println("This place feels familiar.");
+			}
 
 			// Game over after print!
 			if (here.isTerminalState()) {
+				// Prints total time spent in game.
+				System.out.println("\nYou spent " +gameTime.getTotalHours()+" hours in the game.");
 				break;
+				
 			}
 
 			// Show a user the ways out of this place.
 			List<Exit> exits = here.getVisibleExits();
 
-			for (int i=0; i<exits.size(); i++) {
+			for (int i = 0; i < exits.size(); i++) {
 				Exit e = exits.get(i);
-				System.out.println(" "+i+". " + e.getDescription());
+				System.out.println(" " + i + ". " + e.getDescription());
 			}
 
 			// Figure out what the user wants to do, for now, only "quit" is special.
@@ -56,14 +73,42 @@ public class InteractiveFiction {
 			// Do not uppercase action -- I have lowercased it.
 			String action = words.get(0).toLowerCase().trim();
 
-			if (action.equals("quit")) {
+			if (action.equals("q") || action.equals("escape") || action.equals("quit")){
 				if (input.confirm("Are you sure you want to quit?")) {
+					// Prints total time spent in game.
+					System.out.println("\nYou spent " +gameTime.getTotalHours()+" hours in the game.");
 					// quit!
 					break;
 				} else {
 					// go to the top of the game loop!
 					continue;
 				}
+			}
+			// The help command
+			if (action.equals("help")) {
+				System.out.println("To play the game, enter the number of the "
+						+ "option you want to choose, followed by the enter key."
+						+ " If you would like to quit the game at any time, type 'q' or " + "'escape'. Good luck!");
+
+				// go to the top of the game loop!
+				continue;
+			}
+			// The search command
+			if (action.equals("search")) {
+				here.search();
+				continue;
+			}
+
+			// The stuff command
+			if (action.equals("stuff")) {
+				player.printStuff();
+				continue;
+			}
+			// The take command
+			if (action.equals("take")) {
+				player.take(here.getPlacesItems());
+				here.emptyPlacesItems();
+				continue;
 			}
 
 			// From here on out, what they typed better be a number!
@@ -84,6 +129,9 @@ public class InteractiveFiction {
 			Exit destination = exits.get(exitNum);
 			if (destination.canOpen(player)) {
 				player.moveTo(destination.getTarget());
+				// Increase time by 1 hour.
+				gameTime.increaseHour();
+				
 			} else {
 				// TODO: some kind of message about it being locked?
 			}
@@ -94,6 +142,7 @@ public class InteractiveFiction {
 
 	/**
 	 * This is where we play the game.
+	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
@@ -108,6 +157,7 @@ public class InteractiveFiction {
 
 		// You get here by typing "quit" or by reaching a Terminal Place.
 		System.out.println("\n\n>>> GAME OVER <<<");
+		
 	}
 
 }
